@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title> Atal Jal Map View</title>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.25/esri/themes/light/main.css" />
+  <script src="https://js.arcgis.com/4.25/"></script>
+
+  <script>
+    require([
+      "esri/Map",
+      "esri/layers/FeatureLayer",
+      "esri/views/MapView",
+      "esri/widgets/Legend",
+      "esri/layers/support/FeatureEffect",
+      "esri/symbols/SimpleFillSymbol",
+      "esri/symbols/SimpleLineSymbol",
+      "esri/renderers/SimpleRenderer",
+      "esri/Color",
+      "esri/layers/GraphicsLayer",
+      "esri/core/lang",
+      "esri/symbols/SimpleMarkerSymbol",
+      "esri/widgets/Home",
+      "esri/WebMap",
+      "esri/widgets/Expand",
+      "esri/widgets/Search",
+      "esri/widgets/LayerList",
+      "esri/widgets/Print",
+      "esri/widgets/BasemapGallery"
+    ],
+      (Map, FeatureLayer, MapView, Legend, FeatureEffect,
+        SimpleFillSymbol, SimpleLineSymbol, SimpleRenderer,
+        Color, Graphic, EsriLang, SimpleMarkerSymbol, Home, WebMap, Expand, Search, LayerList,Print,BasemapGallery) => {
+        // Create the map
+        const map = new Map({
+          basemap: "gray-vector"
+        });
+
+        // const renderer = new SimpleRenderer({
+        //   Symbol: new SimpleMarkerSymbol({
+        //     size: 4,
+        //     color: [0, 255, 255],
+        //     outline: null
+        //   })
+        // });
+
+
+        const view = new MapView({
+          container: "viewDiv",
+          map: map, center: [77.35280322235, 19.583490648342],
+          // scale: 20101800,
+          zoom: 10,
+          // popup:{
+          //   autoOpenEnabled:false
+          // },
+          extent: {
+            xmin: 66.77867338241654,
+            ymin: 6.650173893728236,
+            xmax: 98.64570707874424,
+            ymax: 37.16828051607544,
+            spatialReference: 4326
+          }
+        });
+        
+        const basemapGallery = new BasemapGallery({
+          view: view,
+          container: document.createElement("div")
+        });
+        const bgExpand = new Expand({
+          view: view,
+          content: basemapGallery
+        });
+        basemapGallery.watch("activeBasemap", () => {
+          const mobileSize =
+            view.heightBreakpoint === "xsmall" ||
+            view.widthBreakpoint === "xsmall";
+
+          if (mobileSize) {
+            bgExpand.collapse();
+          }
+        });
+        view.ui.add(bgExpand, "top-right");
+
+        // view.ui.add(new Legend({ view: view }), "bottom-left");
+        const legend = new Expand({
+          content: new Legend({
+            view: view,
+            style: "card" // other styles include 'classic'
+          }),
+          view: view,
+          expanded: true
+        });
+        view.ui.add(legend, "bottom-left");
+
+        view.when(() => {
+          const layerList = new LayerList({
+            view: view
+          });
+          view.ui.add(layerList, "bottom-right");
+        });
+
+
+
+
+
+        const template = {
+
+          title: "Gram Panchayat :- {Gram_Panchayat} in {State_Name}",
+          content: [
+            {
+
+              type: "fields",
+              fieldInfos: [
+                {
+                  fieldName: "Gram_Panchayat",
+                  label: "Gram Panchayat"
+                },
+                {
+                  fieldName: "Block_Name",
+                  label: "Block_Name",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "District_Name",
+                  label: "District Name",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "State_Name",
+                  label: "State Name",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                }
+              ]
+            }
+          ]
+        };
+        const home = new Home({
+          view: view
+        });
+        view.ui.add(home, "top-left");
+
+        // Abhy supplyside anyotherintervention Popup Fields
+
+        const template1 = {
+
+          title: "Any Other Intervention proposed in WSP",
+          content: [
+            {
+
+              type: "fields",
+              fieldInfos: [
+                {
+                  fieldName: "state_name",
+                  label: "State"
+                },
+                {
+                  fieldName: "district_n",
+                  label: "District",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "block_name",
+                  label: "Block",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "gpname",
+                  label: "Gram Panchayat",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "village_na",
+                  label: "Village",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "latitude",
+                  label: "Latitude",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "longitude",
+                  label: "Longitude",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "other_stru",
+                  label: "Type Of AR Structure",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "storage_ca",
+                  label: "Storage Capacity(ham)",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "no_of_fill",
+                  label: "Number of Fillings One)",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "no_of_fi_1",
+                  label: "Number of Fillings Two)",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+              ]
+            }
+          ]
+        };
+
+        // abhy_supplyside_ar_structures_existing
+        const template2 = {
+
+          title: "Artificial Resource Structures Existing",
+          content: [
+            {
+
+              type: "fields",
+              fieldInfos: [
+                {
+                  fieldName: "state_name",
+                  label: "State"
+                },
+                {
+                  fieldName: "district_n",
+                  label: "District",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "block_name",
+                  label: "Block",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "gpname",
+                  label: "Gram Panchayat",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "village_na",
+                  label: "Village",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "latitude",
+                  label: "Latitude",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "longitude",
+                  label: "Longitude",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "ar_approx_",
+                  label: "Artificial Resources",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "gw_recha_1",
+                  label: "Ground Water Recharge -One",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "gw_recha_2",
+                  label: "Ground Water Recharge-Two",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "storage_ca",
+                  label: "Storage Capacity",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "storage_ca",
+                  label: "Storage Capacity",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "kharif_no_ ",
+                  label: "Kharif",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "rabi_no_of ",
+                  label: "Rabi",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "type_ar_st ",
+                  label: "Type of Artifiial Structure",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+              ]
+            }
+          ]
+        };
+
+
+        // Add Feature Layer abhy_supplyside_anyotherintervention
+
+        var featureLayer = new FeatureLayer({
+          url: "https://ataljal-arcgis.mowr.gov.in/ajserver/rest/services/Observations2/MapServer/2",
+          //       renderer: {                        // autocasts as new SimpleRenderer()
+          //   symbol: {                        // autocasts as new SimpleMarkerSymbol()
+          //     type: "simple-marker",
+          //     style: "diamond",
+          //     color: [ 255, 128, 45 ],       // autocasts as new Color()
+          //     outline: {                     // autocasts as new SimpleLineSymbol()
+          //       style: "dash-dot",
+          //       color: [ 0, 0, 0 ]           // autocasts as new Color()
+          //     }
+          //   }
+          // },
+
+          popupTemplate: template1,
+
+
+        });
+        map.add(featureLayer);
+        view.on("pointer-move", function (event) {
+          view.hitTest(event).then(function (response) {
+            if (response.results.length) {
+              var graphic = response.results.filter(function (result) {
+                return result.graphic.layer === featureLayer;
+              })[0].graphic
+              view.popup.open({
+                location: graphic.geometry.centroid,
+                features: [graphic]
+              });
+            }
+            else {
+              view.popup.close();
+            }
+          });
+        }
+        )
+        // Add Feature Layer abhy_supplyside_ar_structures_existing
+
+        var featureLayer1 = new FeatureLayer({
+          url: "https://ataljal-arcgis.mowr.gov.in/ajserver/rest/services/Observations2/MapServer/0",
+          title:"Artificial Resource",
+
+
+
+          popupTemplate: template2,
+
+        });
+        map.add(featureLayer1);
+        view.on("pointer-move", function (event) {
+          view.hitTest(event).then(function (response) {
+            if (response.results.length) {
+              var graphic = response.results.filter(function (result) {
+                return result.graphic.layer === featureLayer1;
+              })[0].graphic
+              view.popup.open({
+                location: graphic.geometry.centroid,
+                features: [graphic]
+              });
+            }
+            else {
+              view.popup.close();
+            }
+          });
+        }
+        )
+
+
+        var featureLayer10 = new FeatureLayer({
+          url: "https://ataljal-arcgis.mowr.gov.in/ajserver/rest/services/Boundary_131122/MapServer/0",
+          popupTemplate: template,
+          title: "Gram Panchayat",
+          renderer: {
+            type: "simple",
+            symbol: {
+              type: "cim",
+              data: {
+                type: "CIMSymbolReference",
+                symbol: {
+                  // CIM polygon symbol
+                  type: "CIMPolygonSymbol",
+                  symbolLayers: [{
+                    // light blue outline around the polygon
+                    type: "CIMSolidStroke",
+                    enable: true,
+                    width: 2,
+                    color: [4, 92, 220, 255]
+                  },
+                    // {
+                    //   // light blue hatch fill
+                    //   type: "CIMHatchFill",
+                    //   enable: true,
+                    //   lineSymbol: {
+                    //     type: "CIMLineSymbol", // CIM line symbol that makes up the line inside the hatch fill
+                    //     symbolLayers: [{
+                    //       type: "CIMSolidStroke",
+                    //       effects: [{
+                    //         type: "CIMGeometricEffectDashes",
+                    //         dashTemplate: [1, 2],
+                    //         lineDashEnding: "FullPattern",
+                    //       }],
+                    //       enable: true,
+                    //       width: 1,
+                    //       color: [
+                    //         0,
+                    //         92,
+                    //         230,
+                    //         255
+                    //       ]
+                    //     }]
+                    //   },
+                    //   rotation: 45, // rotation of the lines
+                    //   separation: 4 // distance between lines in hatch fill
+                    // },
+                    // {
+                    //   // solid blue fill background
+                    //   type: "CIMSolidFill",
+                    //   enable: true,
+                    //   color: [
+                    //     151,
+                    //     219,
+                    //     242,
+                    //     150
+                    //   ]
+                    // }
+                  ]
+                }
+              }
+            }
+          }
+        });
+        map.add(featureLayer10);
+        view.on("pointer-move", function (event) {
+          view.hitTest(event).then(function (response) {
+            if (response.results.length) {
+              var graphic = response.results.filter(function (result) {
+                return result.graphic.layer === featureLayer10;
+              })[0].graphic
+              view.popup.open({
+                location: graphic.geometry.centroid,
+                features: [graphic]
+              });
+            }
+            else {
+              view.popup.close();
+            }
+          });
+        }
+        )
+        const searchWidget = new Search({
+          view: view,
+          allPlaceholder: "District",
+          includeDefaultSources: false,
+          sources: [
+            {
+              layer: featureLayer10,
+              searchFields: ["Gram_Panchayat"],
+              displayField: "Gram Panchayat",
+              exactMatch: false,
+              outFields: ["Block_Name", "District_Name", "State_Name"],
+              name: "Gram Panchayat",
+              placeholder: "example: Deesa"
+            },
+            {
+              layer: featureLayer1,
+              searchFields: ["state_name", "block_name"],
+              suggestionTemplate: "{block_name}, block_name: {block_name}",
+              exactMatch: false,
+              outFields: ["*"],
+              placeholder: "example: Casey",
+              name: "block_name",
+              zoomScale: 500000,
+              // resultSymbol: {
+              //   type: "picture-marker", // autocasts as new PictureMarkerSymbol()
+              //   url: "https://developers.arcgis.com/javascript/latest/sample-code/widgets-search-multiplesource/live/images/senate.png",
+              //   height: 36,
+              //   width: 36
+              // }
+            }
+
+          ]
+        });
+        // view.when(() => {
+        //   const layerList = new LayerList({
+        //     view: view
+        //   });
+
+        //   // Add widget to the top right corner of the view
+        //   view.ui.add(layerList, "top-right");
+        // });
+
+        // Add the search widget to the top left corner of the view
+
+        const search = new Expand({
+          content: new Search({
+            view: view,
+            style: "card" // other styles include 'classic'
+          }),
+          view: view,
+          expanded: true
+        });
+        view.ui.add(searchWidget, "top-left");
+        // view.ui.add(searchWidget, {
+        //   position: "top-left"
+        // });
+        view.when(() => {
+          const print = new Print({
+            view: view,
+            
+            // specify your own print service
+            printServiceUrl:
+              "https://utility.arcgisonline.com/arcgis/rest/services/Utilities/PrintingTools/GPServer/Export%20Web%20Map%20Task"
+          });
+
+          // Add widget to the top right corner of the view
+          view.ui.add(print, "top-right");
+        });
+
+      });
+
+
+
+
+  </script>
+</head>
+
+<body class="calcite">
+  <div id="viewDiv"></div>
+</body>
+
+</html>
