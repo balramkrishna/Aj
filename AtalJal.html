@@ -16,6 +16,39 @@
       width: 100%;
 
     }
+
+    #seasons-filter {
+      height: auto;
+      width: auto;
+      visibility: hidden;
+    }
+
+    .season-item {
+      width: auto;
+      padding: 12px;
+      text-align: center;
+      vertical-align: baseline;
+      cursor: pointer;
+      height: auto;
+    }
+
+    .season-item:focus {
+      background-color: dimgrey;
+    }
+
+    .season-item:hover {
+      background-color: dimgrey;
+    }
+
+    #titleDiv {
+      padding: 10px;
+    }
+
+    #titleText {
+      font-size: 20pt;
+      font-weight: 60;
+      padding-bottom: 10px;
+    }
   </style>
 
   <link rel="stylesheet" href="https://js.arcgis.com/4.25/esri/themes/light/main.css" />
@@ -41,16 +74,26 @@
       "esri/widgets/Search",
       "esri/widgets/LayerList",
       "esri/widgets/Print",
-      "esri/widgets/BasemapGallery"
+      "esri/widgets/BasemapGallery",
+      "esri/widgets/Sketch/SketchViewModel",
+      "esri/rest/support/Query",
+      "esri/rest/query",
+      "esri/widgets/ScaleBar",
+      "esri/widgets/Compass",
+      "esri/geometry/Extent",
+
     ],
       (Map, FeatureLayer, MapView, Legend, FeatureEffect,
         SimpleFillSymbol, SimpleLineSymbol, SimpleRenderer,
-        Color, Graphic, EsriLang, SimpleMarkerSymbol, Home, WebMap, Expand, Search, LayerList,Print,BasemapGallery) => {
+        Color, GraphicsLayer, EsriLang, SimpleMarkerSymbol, Home, WebMap, Expand, Search, LayerList, Print, BasemapGallery, SketchViewModel, Query, query, ScaleBar,
+        Compass, Extent) => {
+        let floodLayerView;
         // Create the map
         const map = new Map({
           basemap: "gray-vector"
         });
-
+        const minScale = 80000;
+        //const minScale1 = 800000;
         // const renderer = new SimpleRenderer({
         //   Symbol: new SimpleMarkerSymbol({
         //     size: 4,
@@ -62,21 +105,22 @@
 
         const view = new MapView({
           container: "viewDiv",
-          map: map, center: [77.35280322235, 19.583490648342],
+          map: map,
+          center: [78, 22],
           // scale: 20101800,
-          zoom: 10,
+          zoom: 4,
           // popup:{
           //   autoOpenEnabled:false
           // },
-          extent: {
-            xmin: 66.77867338241654,
-            ymin: 6.650173893728236,
-            xmax: 98.64570707874424,
-            ymax: 37.16828051607544,
-            spatialReference: 4326
-          }
+          // extent: {
+          //   xmin: 66.77867338241654,
+          //   ymin: 6.650173893728236,
+          //   xmax: 98.64570707874424,
+          //   ymax: 37.16828051607544,
+          //   spatialReference: 4326
+          // }
         });
-        
+
         const basemapGallery = new BasemapGallery({
           view: view,
           container: document.createElement("div")
@@ -97,22 +141,41 @@
         view.ui.add(bgExpand, "top-right");
 
         // view.ui.add(new Legend({ view: view }), "bottom-left");
-        const legend = new Expand({
-          content: new Legend({
-            view: view,
-            style: "card" // other styles include 'classic'
-          }),
-          view: view,
-          expanded: true
-        });
-        view.ui.add(legend, "bottom-left");
+        // const legend = new Expand({
+        //   content: new Legend({
+        //     view: view,
+        //     style: "card" // other styles include 'classic'
+        //   }),
+        //   view: view,
+        //   expanded: true
+        // });
+        // view.ui.add(legend, "bottom-left");
 
-        view.when(() => {
-          const layerList = new LayerList({
-            view: view
-          });
-          view.ui.add(layerList, "bottom-right");
-        });
+        // view.when(() => {
+        //   const layerList = new LayerList({
+        //     view: view
+        //   });
+        //   view.ui.add(layerList, "bottom-right");
+        // });
+
+        const labelClass = {
+          // autocasts as new LabelClass()
+          symbol: {
+            type: "text",  // autocasts as new TextSymbol()
+            color: "green",
+            font: {  // autocast as new Font()
+              family: "Playfair Display",
+              size: 8,
+              weight: "bold"
+            }
+          },
+          labelPlacement: "above-center",
+          minScale: minScale,
+          labelExpressionInfo: {
+            expression: "$feature.Gram_Panchayat"
+
+          }
+        };
 
 
 
@@ -158,10 +221,49 @@
             }
           ]
         };
-        const home = new Home({
-          view: view
-        });
-        view.ui.add(home, "top-left");
+
+
+        const templateB = {
+
+          title: " Block Name:- {Block_Name} in {State_Name}",
+          content: [
+            {
+
+              type: "fields",
+              fieldInfos: [
+
+                {
+                  fieldName: "Block_Name",
+                  label: "Block_Name",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "District_Name",
+                  label: "District Name",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                },
+                {
+                  fieldName: "State_Name",
+                  label: "State Name",
+                  format: {
+                    digitSeparator: true,
+                    places: 0
+                  }
+                }
+              ]
+            }
+          ]
+        };
+        // const home = new Home({
+        //   view: view
+        // });
+        // view.ui.add(home, "top-left");
 
         // Abhy supplyside anyotherintervention Popup Fields
 
@@ -408,7 +510,7 @@
           //     }
           //   }
           // },
-
+          title: "Supply Side Any Other Intervention",
           popupTemplate: template1,
 
 
@@ -435,7 +537,7 @@
 
         var featureLayer1 = new FeatureLayer({
           url: "https://ataljal-arcgis.mowr.gov.in/ajserver/rest/services/Observations2/MapServer/0",
-          title:"Artificial Resource",
+          title: "Artificial Resource",
 
 
 
@@ -466,83 +568,70 @@
           url: "https://ataljal-arcgis.mowr.gov.in/ajserver/rest/services/Boundary_131122/MapServer/0",
           popupTemplate: template,
           title: "Gram Panchayat",
-          renderer: {
-            type: "simple",
-            symbol: {
-              type: "cim",
-              data: {
-                type: "CIMSymbolReference",
-                symbol: {
-                  // CIM polygon symbol
-                  type: "CIMPolygonSymbol",
-                  symbolLayers: [{
-                    // light blue outline around the polygon
-                    type: "CIMSolidStroke",
-                    enable: true,
-                    width: 2,
-                    color: [4, 92, 220, 255]
-                  },
-                    // {
-                    //   // light blue hatch fill
-                    //   type: "CIMHatchFill",
-                    //   enable: true,
-                    //   lineSymbol: {
-                    //     type: "CIMLineSymbol", // CIM line symbol that makes up the line inside the hatch fill
-                    //     symbolLayers: [{
-                    //       type: "CIMSolidStroke",
-                    //       effects: [{
-                    //         type: "CIMGeometricEffectDashes",
-                    //         dashTemplate: [1, 2],
-                    //         lineDashEnding: "FullPattern",
-                    //       }],
-                    //       enable: true,
-                    //       width: 1,
-                    //       color: [
-                    //         0,
-                    //         92,
-                    //         230,
-                    //         255
-                    //       ]
-                    //     }]
-                    //   },
-                    //   rotation: 45, // rotation of the lines
-                    //   separation: 4 // distance between lines in hatch fill
-                    // },
-                    // {
-                    //   // solid blue fill background
-                    //   type: "CIMSolidFill",
-                    //   enable: true,
-                    //   color: [
-                    //     151,
-                    //     219,
-                    //     242,
-                    //     150
-                    //   ]
-                    // }
-                  ]
-                }
-              }
-            }
-          }
+          outFields: ["State_Name"],
+          labelingInfo: [labelClass]
+          //   renderer: {
+          //     type: "simple",
+          //     symbol: {
+          //       type: "cim",
+          //       data: {
+          //         type: "CIMSymbolReference",
+          //         symbol: {
+          //           // CIM polygon symbol
+          //           type: "CIMPolygonSymbol",
+          //           symbolLayers: [{
+          //             // light blue outline around the polygon
+          //             type: "CIMSolidStroke",
+          //             enable: true,
+          //             width: 2,
+          //             color: [4, 92, 220, 255]
+          //           },
+          //             // {
+          //             //   // light blue hatch fill
+          //             //   type: "CIMHatchFill",
+          //             //   enable: true,
+          //             //   lineSymbol: {
+          //             //     type: "CIMLineSymbol", // CIM line symbol that makes up the line inside the hatch fill
+          //             //     symbolLayers: [{
+          //             //       type: "CIMSolidStroke",
+          //             //       effects: [{
+          //             //         type: "CIMGeometricEffectDashes",
+          //             //         dashTemplate: [1, 2],
+          //             //         lineDashEnding: "FullPattern",
+          //             //       }],
+          //             //       enable: true,
+          //             //       width: 1,
+          //             //       color: [
+          //             //         0,
+          //             //         92,
+          //             //         230,
+          //             //         255
+          //             //       ]
+          //             //     }]
+          //             //   },
+          //             //   rotation: 45, // rotation of the lines
+          //             //   separation: 4 // distance between lines in hatch fill
+          //             // },
+          //             // {
+          //             //   // solid blue fill background
+          //             //   type: "CIMSolidFill",
+          //             //   enable: true,
+          //             //   color: [
+          //             //     151,
+          //             //     219,
+          //             //     242,
+          //             //     150
+          //             //   ]
+          //             // }
+          //           ]
+          //         }
+          //       }
+          //     }
+          //   }
         });
         map.add(featureLayer10);
-        view.on("pointer-move", function (event) {
-          view.hitTest(event).then(function (response) {
-            if (response.results.length) {
-              var graphic = response.results.filter(function (result) {
-                return result.graphic.layer === featureLayer10;
-              })[0].graphic
-              view.popup.open({
-                location: graphic.geometry.centroid,
-                features: [graphic]
-              });
-            }
-            else {
-              view.popup.close();
-            }
-          });
-        }
-        )
+
+
         const searchWidget = new Search({
           view: view,
           allPlaceholder: "District",
@@ -555,24 +644,9 @@
               exactMatch: false,
               outFields: ["Block_Name", "District_Name", "State_Name"],
               name: "Gram Panchayat",
-              placeholder: "example: Deesa"
+              placeholder: "Gram Panchayat"
             },
-            {
-              layer: featureLayer1,
-              searchFields: ["state_name", "block_name"],
-              suggestionTemplate: "{block_name}, block_name: {block_name}",
-              exactMatch: false,
-              outFields: ["*"],
-              placeholder: "example: Casey",
-              name: "block_name",
-              zoomScale: 500000,
-              // resultSymbol: {
-              //   type: "picture-marker", // autocasts as new PictureMarkerSymbol()
-              //   url: "https://developers.arcgis.com/javascript/latest/sample-code/widgets-search-multiplesource/live/images/senate.png",
-              //   height: 36,
-              //   width: 36
-              // }
-            }
+
 
           ]
         });
@@ -599,18 +673,401 @@
         // view.ui.add(searchWidget, {
         //   position: "top-left"
         // });
+
+        const seasonsNodes = document.querySelectorAll(`.season-item`);
+        const seasonsElement = document.getElementById("seasons-filter");
+
+        // click event handler for seasons choices
+        seasonsElement.addEventListener("click", filterBySeason);
+
+        // User clicked on Winter, Spring, Summer or Fall
+        // set an attribute filter on flood warnings layer view
+        // to display the warnings issued in that season
+        function filterBySeason(event) {
+          const selectedSeason = event.target.getAttribute("data-season");
+          floodLayerView.filter = {
+            where: "State_Name = '" + selectedSeason + "'",
+
+          };
+        }
+
+        view.whenLayerView(featureLayer10).then((layerView) => {
+          // flash flood warnings layer loaded
+          // get a reference to the flood warnings layerview
+          floodLayerView = layerView;
+
+          // set up UI items
+          seasonsElement.style.visibility = "visible";
+          const seasonsExpand = new Expand({
+            view: view,
+            content: seasonsElement,
+            expandIconClass: "esri-icon-filter",
+            group: "top-left"
+          });
+          //clear the filters when user closes the expand widget
+          seasonsExpand.watch("expanded", () => {
+            if (!seasonsExpand.expanded) {
+              floodLayerView.filter = null;
+            }
+          });
+          view.ui.add(seasonsExpand, "top-left");
+          view.ui.add("titleDiv", "top-right");
+        });
+
+        var featureLayerBlock = new FeatureLayer({
+          url: "https://ataljal-arcgis.mowr.gov.in/ajserver/rest/services/Boundary_131122/MapServer/1",
+          popupTemplate: templateB,
+          title: "Block",
+          outFields: ["Block_Name"],
+
+          labelingInfo: [labelClass]
+        });
+        map.add(featureLayerBlock);
+
+
+        var featureLayerDistrict = new FeatureLayer({
+          url: "https://ataljal-arcgis.mowr.gov.in/ajserver/rest/services/Boundary_131122/MapServer/3",
+          popupTemplate: templateB,
+          title: "District",
+          outFields: ["District_Name"],
+
+          labelingInfo: [labelClass]
+        });
+        map.add(featureLayerDistrict);
+
+
+        var featureLayerState = new FeatureLayer({
+          url: "https://ataljal-arcgis.mowr.gov.in/ajserver/rest/services/Boundary_131122/MapServer/2",
+          popupTemplate: templateB,
+          title: "State",
+          outFields: ["State_Name"],
+
+          labelingInfo: [labelClass]
+        });
+        map.add(featureLayerState);
+
+        var featureLayerGWRA = new FeatureLayer({
+          url: "https://ataljal-arcgis.mowr.gov.in/ajserver/rest/services/Ataljal/Rainfall/MapServer/1",
+          popupTemplate: templateB,
+          title: "GWRA",
+          outFields: ["State_Name"],
+
+          labelingInfo: [labelClass]
+        });
+        map.add(featureLayerGWRA);
+
+
+        var featureLayerRainFall = new FeatureLayer({
+          url: "https://ataljal-arcgis.mowr.gov.in/ajserver/rest/services/Ataljal/Rainfall/MapServer/0",
+          popupTemplate: templateB,
+          title: "RainFall",
+          outFields: ["Area"],
+
+          labelingInfo: [labelClass]
+        });
+        map.add(featureLayerRainFall);
+
+        var featureLayerWQ = new FeatureLayer({
+          url: "https://ataljal-arcgis.mowr.gov.in/ajserver/rest/services/WLQP/MapServer/4",
+          popupTemplate: templateB,
+          title: "Water Quality",
+          outFields: ["gp"],
+
+          labelingInfo: [labelClass]
+        });
+        map.add(featureLayerWQ);
+        view.on("pointer-move", function (event) {
+          view.hitTest(event).then(function (response) {
+            if (response.results.length) {
+              var graphic = response.results.filter(function (result) {
+                return result.graphic.layer === featureLayerWQ;
+              })[0].graphic
+              view.popup.open({
+                location: graphic.geometry.centroid,
+                features: [graphic]
+              });
+            }
+            else {
+              view.popup.close();
+            }
+          });
+        }
+        )
+
+
+
+        var featureLayerWellIn = new FeatureLayer({
+          url: "https://ataljal-arcgis.mowr.gov.in/ajserver/rest/services/Observations2/MapServer/6",
+          popupTemplate: templateB,
+          title: "Well Inventory",
+          outFields: ["gp"],
+
+          labelingInfo: [labelClass]
+        });
+        map.add(featureLayerWellIn);
+        view.on("pointer-move", function (event) {
+          view.hitTest(event).then(function (response) {
+            if (response.results.length) {
+              var graphic = response.results.filter(function (result) {
+                return result.graphic.layer === featureLayerWellIn;
+              })[0].graphic
+              view.popup.open({
+                location: graphic.geometry.centroid,
+                features: [graphic]
+              });
+            }
+            else {
+              view.popup.close();
+            }
+          });
+        }
+        )
+
+
+
+
+        var featureLayerPiezo = new FeatureLayer({
+          url: "https://ataljal-arcgis.mowr.gov.in/ajserver/rest/services/Observations2/MapServer/6",
+          popupTemplate: templateB,
+          title: "Piezometer Atal Jal",
+          outFields: ["gp"],
+
+          labelingInfo: [labelClass]
+        });
+        map.add(featureLayerPiezo);
+        view.on("pointer-move", function (event) {
+          view.hitTest(event).then(function (response) {
+            if (response.results.length) {
+              var graphic = response.results.filter(function (result) {
+                return result.graphic.layer === featureLayerPiezo;
+              })[0].graphic
+              view.popup.open({
+                location: graphic.geometry.centroid,
+                features: [graphic]
+              });
+            }
+            else {
+              view.popup.close();
+            }
+          });
+        }
+        )
+
+
+        var featureLayerWL = new FeatureLayer({
+          url: "https://ataljal-arcgis.mowr.gov.in/ajserver/rest/services/Ataljal/WLN/MapServer/0",
+          popupTemplate: templateB,
+          title: "Water Level",
+          outFields: ["gp"],
+
+          labelingInfo: [labelClass]
+        });
+        map.add(featureLayerWL);
+        view.on("pointer-move", function (event) {
+          view.hitTest(event).then(function (response) {
+            if (response.results.length) {
+              var graphic = response.results.filter(function (result) {
+                return result.graphic.layer === featureLayerWL;
+              })[0].graphic
+              view.popup.open({
+                location: graphic.geometry.centroid,
+                features: [graphic]
+              });
+            }
+            else {
+              view.popup.close();
+            }
+          });
+        }
+        )
+
         view.when(() => {
           const print = new Print({
             view: view,
-            
+
             // specify your own print service
             printServiceUrl:
-              "https://utility.arcgisonline.com/arcgis/rest/services/Utilities/PrintingTools/GPServer/Export%20Web%20Map%20Task"
+              "https://utility.arcgisonline.com/arcgis/rest/services/Utilities/PrintingTools/GPServer/Export%20Web%20Map%20Task",
+
           });
 
           // Add widget to the top right corner of the view
           view.ui.add(print, "top-right");
         });
+
+
+
+        // const legend = new Expand({
+        //   content: new Legend({
+        //     view: view,
+        //     style: "card" // other styles include 'classic'
+        //   }),
+        //   view: view,
+        //   expanded: true
+        // });
+        // view.ui.add(legend, "bottom-left");
+
+        // view.when(() => {
+        //   const layerList = new LayerList({
+        //     view: view
+        //   });
+        //   view.ui.add(layerList, "bottom-right");
+        // });
+        const homeBtn = new Home({
+          view: view
+        });
+        const scaleBar = new ScaleBar({
+          view: view,
+          unit: "dual"
+        });
+        const layerList = new LayerList({
+          view: view
+        });
+        const legend = new Legend({
+          view: view
+        });
+        const layerListExpand = new Expand({
+          view: view,
+          content: layerList,
+          expanded: false,
+          expandTooltip: "Expand LayerList"
+        });
+        const legendExpand = new Expand({
+          view: view,
+          content: legend,
+          expandTooltip: "Expand Legend",
+          expanded: false
+        });
+        const compass = new Compass({
+          view: view,
+          visible: false
+        });
+        view.ui.add(homeBtn, "top-left");
+        view.ui.add(scaleBar, "bottom-right");
+        view.ui.add(layerListExpand, "top-right");
+        view.ui.add(legendExpand, "top-right");
+        view.ui.add(compass, "top-left");
+        layer.when(() => {
+          const initialExtent = Extent.fromJSON(layer.sourceJSON.initialExtent);
+          view.goTo(initialExtent);
+        });
+        // load the Compass only when the view is rotated
+        view.watch('rotation', function (rotation) {
+          if (rotation && !compass.visible) {
+            compass.visible = true;
+          }
+        });
+
+
+        const featureTable = new FeatureTable({
+          layer: featureLayerBlock,
+          view: view,
+          hiddenFields: ["Block_Area", "District_LGD"], // will not show these two fields within the table
+          container: document.getElementById("tableDiv")
+        });
+
+
+
+
+
+        var featureLayerView;
+        featureLayer10.when(function () {
+          view.whenLayerView(featureLayer10).then(function (layerView) {
+            featureLayerView = layerView;
+          });
+        });
+
+        const selectLayer = new GraphicsLayer();
+        var highlight;
+        //map.add(selectLayer);
+
+
+
+
+
+        const sel = document.getElementById("sel");
+        view.ui.add(sel, "top-right");
+        sel.addEventListener("click", function () {
+          view.graphics.removeAll();
+          view.on("click", function (event) {
+            view.hitTest(event).then(function (response) {
+              console.log(response.results.length);
+              if (response.results.length > 1) {
+                const graphic = response.results.filter(function (result) {
+                  return result.graphic.layer === featurelayer10;
+                })[0].graphic;
+
+                if (highlight) {
+                  highlight.remove();
+                }
+
+                highlight = featureLayerView.highlight(graphic);
+
+                //console.log(graphic.geometry.extent);
+                _selectFeature(graphic.geometry);
+              }
+            });
+          });
+        });
+
+
+        function _selectFeature(extent) {
+          var countOfFeatures1 = 0;
+          var countOfFeatures2 = 0;
+          const query = new Query();
+          query.where = "1=1";
+          query.outSpatialReference = view.spatialReference;
+          query.returnGeometry = true;
+          query.geometry = extent;
+          query.spatialRelationship = Query.SPATIAL_REL_INTERSECTS;
+
+          featurelayer.when(function () {
+            featurelayer.queryFeatures(query).then((results) => {
+              if (results.features && results.features.length > 0) {
+                results.features.forEach(function (graphic) {
+                  countOfFeatures1++;
+                });
+                console.log("Total", results.features[0].layer.title + ":" + countOfFeatures1);
+              };
+            });
+          }).then(function () {
+
+            featurelayer1.when(function () {
+              featurelayer1.queryFeatures(query).then((results) => {
+                if (results.features && results.features.length > 0) {
+                  results.features.forEach(function (graphic) {
+                    countOfFeatures2++;
+                  });
+
+                  console.log("Total", results.features[0].layer.title + ":" + countOfFeatures2);
+                };
+              });
+            });
+          });
+        }
+
+
+
+
+        // view.on("pointer-move", function (event) {
+        //   view.hitTest(event).then(function (response) {
+        //     if (response.results.length) {
+        //       var graphic = response.results.filter(function (result) {
+        //         return result.graphic.layer === featureLayer10;
+        //       })[0].graphic
+        //       view.popup.open({
+        //         location: graphic.geometry.centroid,
+        //         features: [graphic]
+        //       });
+        //     }
+        //     else {
+        //       view.popup.close();
+        //     }
+        //   });
+        // }
+        // )
+
+
 
       });
 
@@ -621,7 +1078,32 @@
 </head>
 
 <body class="calcite">
+  <div class="grid-container">
+    <div class="item1">
+      <p>Atal Jal</p>
+    </div>
+    <div class="item2">
+      <p>Main Website: <a class="breadcrumb" href="https://ataljal.mowr.gov.in/" target="sdkView">Atal Jal</a></p>
+    </div>
+  </div>
+
   <div id="viewDiv"></div>
+  <div id="seasons-filter" class="esri-widget">
+    <div class="season-item visible-season" data-season="Gujarat">Gujarat</div>
+    <div class="season-item visible-season" data-season="Haryana">Haryana</div>
+    <div class="season-item visible-season" data-season="Karnataka">Karnataka</div>
+    <div class="season-item visible-season" data-season="Madhya Pradesh">Madhya Pradesh</div>
+    <div class="season-item visible-season" data-season="Maharashtra">Maharashtra</div>
+    <div class="season-item visible-season" data-season="Uttar Pradesh">Uttar Pradesh</div>
+    <div class="season-item visible-season" data-season="Rajasthan">Rajasthan</div>
+  </div>
+
+  <div id="titleDiv" class="esri-widget">
+    <div id="sel" class="esri-component esri-widget--button esri-widget" role="button">
+      <span class="esri-icon esri-icon-cursor"></span>
+    </div>
+
+  </div>
 </body>
 
 </html>
